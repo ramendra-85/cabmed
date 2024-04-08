@@ -77,6 +77,11 @@ class VehicleComponent extends Component
                 }
           }
 
+          public $remarkText = [];
+          public $vehicle_id = [];
+          public $remarkId = [];
+      
+
     public function render()
     {
           if($this->activeTab=='cityCount'){
@@ -1317,6 +1322,49 @@ class VehicleComponent extends Component
          };
      
          return response()->stream($callback, 200, $headers);
+    }
+
+    public function saveRemark($vehicle_id)
+    {
+        try {
+            DB::beginTransaction();
+    
+            $remarkData = DB::table('remark_data')
+                            ->where('remark_vehicle_id',$vehicle_id)
+                            ->first();
+
+            $remarkId = $remarkData->remark_id ?? null;
+            $remarkText = $this->remarkText[$vehicle_id];
+
+            if (!is_null($remarkId)) {
+                DB::table('remark_data')
+                    ->where('remark_vehicle_id', $vehicle_id)
+                    ->update([
+                        'remark_text' => $remarkText,
+                        'updated_at' => now(),
+                    ]);
+    
+                session()->flash('remarkSaved', 'Remark Updated Successfully..');
+            } else {
+                $remarkByUserId = 1; // You might want to change this based on your authentication system
+                $remarkId = DB::table('remark_data')->insertGetId([
+                    'remark_vehicle_id' => $vehicle_id,
+                    'remark_type' => $remarkByUserId,
+                    'remark_text' => $remarkText,
+                    'remark_add_unix_time' => now()->timestamp,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+    
+                session()->flash('remarkSaved', 'Remark Added Successfully..'.$remarkId);
+            }
+    
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            session()->flash('errorRemark', 'Error: ' . $e->getMessage());
+            \Log::error('Error occurred while processing saveRemark: ' . $e->getMessage());
+        }
     }
 
 }

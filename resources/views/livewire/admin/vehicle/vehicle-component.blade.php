@@ -5,6 +5,21 @@
         @elseif (session()->has('message') && session()->has('type') == 'store')
         <div class="alert alert-success">{{ session('message') }}</div>
         @endif
+
+        @if (session()->has('remarkSaved'))
+    <div class="alert alert-success alert-dismissible" role="alert">
+        <span type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></span>
+        <strong>{{ session('remarkSaved') }}!</strong>
+    </div>
+    @endif
+
+    @if (session()->has('errorRemark'))
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        <span type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></span>
+        <strong>{{ session('errorRemark') }}!</strong>
+    </div>
+    @endif
+
         @include('livewire.admin.vehicle.vehicle_nav_component')
 
         <div class="card custom__filter__responsive">
@@ -108,11 +123,26 @@
                         <td>@if (!empty($key['active_drivers'][0]))
 						{{ $key['active_drivers'][0]->driver_name }} {{ $key['active_drivers'][0]->driver_last_name }} ({{ $key['active_drivers'][0]->driver_id }}) @else Not Assigned @endif</td>
                          <td> @if (!empty($key['active_drivers'][0])) {{ $key['active_drivers'][0]->driver_mobile }} @else N/A @endif</td>
-                        <td>
-                        @if($key['vehicle']->remark_id) {{$key['vehicle']->remark_text}} @else N/A @endif
+                         <td>
+                            <input type="text" wire:model.debounce.500ms="remarkText.{{ $key['vehicle']->vehicle_id }}" wire:key="{{$key['vehicle']->remark_id }}" value="{{$key['vehicle']->remark_text ?? null}}" placeholder="Enter The Remark" class="text-center">
+                            <input type="hidden" wire:model="vehicle_id.{{$key['vehicle']->vehicle_id }}" value="{{$key['vehicle']->vehicle_id}}" class="text-center">
+
+                            <br />
+                            <p class="m-0 mt-2">
+                                Remark Text:
+                               ( {{$key['vehicle']->remark_text}} )
+                            </p>
+                            <p class="m-0 mt-2">
+                                Commented:
+                                {{$key['vehicle']->admin_name}}
+                            </p>
+                           
                         </td>
-                      
+                       
                         <td class="action__btn lbtn-group">
+
+                        <button class="btn-info" wire:click="saveRemark({{ $key['vehicle']->vehicle_id }})"><i class="fa fa-edit"></i></button>
+                        
                             @if($key['vehicle']->vehicle_added_type == 1)
                             <button  wire:navigate href="{{route('add-vehicle',['vehicleId' => Crypt::encrypt($key['vehicle']->vehicle_id)])}}" target="_blank" class="btn-primary"><i class="fa fa-edit fa-sm"></i></button>
                             @endif
@@ -166,6 +196,7 @@
 
     </div>
 </div>
+
 </div>
 
   <!-- /.card -->
@@ -179,4 +210,5 @@
         });
     });
 </script>
+
   <!-- /.row -->
